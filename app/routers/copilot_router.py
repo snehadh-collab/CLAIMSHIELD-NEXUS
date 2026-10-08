@@ -1,5 +1,7 @@
 import os
 from fastapi import APIRouter, HTTPException
+from dotenv import load_dotenv
+load_dotenv()
 from pydantic import BaseModel
 from typing import List, Optional
 from google import genai

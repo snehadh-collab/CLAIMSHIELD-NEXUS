@@ -1,5 +1,7 @@
 import os
 import json
+from dotenv import load_dotenv
+load_dotenv()
 from google import genai
 from google.genai import types
 from app.services.policy_rag import get_relevant_policies
