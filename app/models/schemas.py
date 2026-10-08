@@ -29,3 +29,23 @@ class ClaimAnalysisResponse(BaseModel):
     provider_npi: str
     rule_flags: RuleFlags
     anomaly_score: AnomalyScore
+    # Append to app/models/schemas.py
+
+class ExposureForecast(BaseModel):
+    provider_npi: str
+    historical_daily_avg_claim: float
+    day_30_exposure: float
+    day_60_exposure: float
+    day_90_exposure: float
+
+class SIUCase(BaseModel):
+    case_id: str
+    provider_npi: str
+    member_id: str
+    total_claim_amount: float
+    rule_flag_count: int
+    ml_anomaly_score: float
+    graph_centrality: float
+    composite_risk_score: float
+    status: str = "OPEN"
+    forecast: Optional[ExposureForecast] = None
