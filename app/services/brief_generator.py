@@ -7,7 +7,7 @@ from app.models.schemas import SIUBriefSchema
 
 # Initialize Google Gemini Client
 # Make sure GEMINI_API_KEY is set in your environment or pass api_key directly
-api_key = os.environ.get("GEMINI_API_KEY", "AQ.Ab8RN6KT7CCqhGFEysIR_wuXe9v6PdZ9EJJ5dDxprMD2SqGTDA")
+api_key = os.environ.get("GEMINI_API_KEY", "YOUR_GEMINI_API_KEY_HERE")
 client = genai.Client(api_key=api_key)
 
 def generate_siu_brief(case_id: str, claim_details: str, flagged_rules: list[str]) -> dict:
