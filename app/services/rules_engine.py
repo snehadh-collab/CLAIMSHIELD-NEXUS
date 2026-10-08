@@ -39,9 +39,14 @@ def evaluate_claim_rules(current_claim: Claim, recent_claims: List[Claim]) -> Ru
     # Rule 3: Upcoding Anomaly (4x over benchmark)
     baseline_price = CPT_BASELINE_BENCHMARK.get(current_claim.cpt_code, 150.00)
     if current_claim.claim_amount >= (baseline_price * 4.0):
+        flags.upcoding_flag = True
         flags.upcoding_anomaly = True
         reasons.append(f"Claim amount ${current_claim.claim_amount:.2f} is >= 4x benchmark (${baseline_price:.2f})")
 
     flags.flag_reasons = list(set(reasons))
-    flags.flag_count = sum([flags.is_duplicate, flags.impossible_geography, flags.upcoding_anomaly])
+    flags.flag_count = sum([
+        flags.is_duplicate,
+        flags.impossible_geography,
+        flags.upcoding_flag or flags.upcoding_anomaly
+    ])
     return flags

@@ -19,6 +19,8 @@ class RuleFlags(BaseModel):
     is_duplicate: bool = False
     impossible_geography: bool = False
     upcoding_flag: bool = False
+    upcoding_anomaly: bool = False
+    flag_count: int = 0
     flag_reasons: List[str] = []
 
 class AnomalyScore(BaseModel):
@@ -31,22 +33,29 @@ class ClaimAnalysisResponse(BaseModel):
     rule_flags: RuleFlags
     anomaly_score: AnomalyScore
 
-# --- SIU Queue & Forecasting Schemas ---
+# --- Exposure Forecast Schema (Defined FIRST so SIUCase can reference it) ---
+class ExposureForecast(BaseModel):
+    provider_npi: str
+    daily_velocity: float = 0.0
+    historical_daily_avg_claim: float = 0.0
+    day_30_exposure: float
+    day_60_exposure: float
+    day_90_exposure: float
+
+# --- SIU Queue Case Schema ---
 class SIUCase(BaseModel):
     case_id: str
     provider_npi: str
     composite_risk_score: float
-    total_flagged_amount: float
-    claim_count: int
-    primary_flag_reason: str
+    total_flagged_amount: float = 0.0
+    total_claim_amount: float = 0.0
+    claim_count: int = 1
+    primary_flag_reason: str = "Automated Anomaly Detection"
+    rule_flag_count: int = 0
+    ml_anomaly_score: float = 0.0
     graph_centrality: float = 0.0
-
-class ExposureForecast(BaseModel):
-    provider_npi: str
-    daily_velocity: float
-    day_30_exposure: float
-    day_60_exposure: float
-    day_90_exposure: float
+    member_id: Optional[str] = None
+    forecast: Optional[ExposureForecast] = None
 
 # --- Copilot & Context Aggregator Schemas ---
 class CopilotContextPayload(BaseModel):
