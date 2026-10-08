@@ -3,13 +3,14 @@ from fastapi.middleware.cors import CORSMiddleware
 from typing import List, Dict
 from datetime import datetime
 
-from app.models.schemas import Claim, ClaimAnalysisResponse, SIUCase, ExposureForecast
+from app.models.schemas import Claim, ClaimAnalysisResponse, SIUCase, ExposureForecast, CopilotContextPayload
 from app.services.rules_engine import evaluate_claim_rules
 from app.services.ml_engine import ml_service
 from app.services.siu_ranking import generate_siu_queue
 from app.services.forecasting import calculate_provider_exposure
+from app.services.context_aggregator import build_copilot_context
 
-app = FastAPI(title="ClaimShield Nexus - Backend Engine", version="2.0.0")
+app = FastAPI(title="ClaimShield Nexus - Backend Engine", version="3.0.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -23,9 +24,8 @@ CLAIM_DATABASE: List[Claim] = []
 RULE_RESULTS_MAP: Dict[str, any] = {}
 ANOMALY_RESULTS_MAP: Dict[str, any] = {}
 
-# Mock Graph Centrality Map (Simulating Member 1's Handoff)
 GRAPH_CENTRALITY_MAP: Dict[str, float] = {
-    "NPI-999": 0.85,  # High centrality (Fraud Ring)
+    "NPI-999": 0.85,
     "NPI-100": 0.20,
     "NPI-101": 0.10
 }
@@ -42,14 +42,12 @@ def startup_event():
     ml_service.fit(CLAIM_DATABASE)
 
     for c in CLAIM_DATABASE:
-        r = evaluate_claim_rules(c, CLAIM_DATABASE)
-        a = ml_service.predict(c)
-        RULE_RESULTS_MAP[c.claim_id] = r
-        ANOMALY_RESULTS_MAP[c.claim_id] = a
+        RULE_RESULTS_MAP[c.claim_id] = evaluate_claim_rules(c, CLAIM_DATABASE)
+        ANOMALY_RESULTS_MAP[c.claim_id] = ml_service.predict(c)
 
 @app.get("/")
 def health_check():
-    return {"status": "online", "system": "ClaimShield Nexus Backend", "version": "2.0.0"}
+    return {"status": "online", "system": "ClaimShield Nexus Backend", "version": "3.0.0"}
 
 @app.post("/api/v1/analyze", response_model=ClaimAnalysisResponse)
 def analyze_claim(claim: Claim):
@@ -67,10 +65,8 @@ def analyze_claim(claim: Claim):
         anomaly_score=anomaly_results
     )
 
-# Feature 2.3: SIU Queue Endpoint
 @app.get("/api/v1/siu/queue", response_model=List[SIUCase])
 def get_siu_queue():
-    """Returns cases ranked by Composite Risk Score."""
     return generate_siu_queue(
         CLAIM_DATABASE,
         RULE_RESULTS_MAP,
@@ -78,11 +74,35 @@ def get_siu_queue():
         GRAPH_CENTRALITY_MAP
     )
 
-# Feature 2.4: Exposure Forecast Endpoint
 @app.get("/api/v1/cases/{provider_npi}/forecast", response_model=ExposureForecast)
 def get_case_forecast(provider_npi: str):
-    """Calculates 30/60/90 day projected financial loss for a provider."""
     provider_claims = [c for c in CLAIM_DATABASE if c.provider_npi == provider_npi]
     if not provider_claims:
         raise HTTPException(status_code=404, detail=f"Provider NPI {provider_npi} not found")
     return calculate_provider_exposure(provider_npi, provider_claims)
+
+@app.get("/api/v1/copilot/context/{case_id}", response_model=CopilotContextPayload)
+def get_copilot_context(case_id: str):
+    siu_queue = generate_siu_queue(
+        CLAIM_DATABASE,
+        RULE_RESULTS_MAP,
+        ANOMALY_RESULTS_MAP,
+        GRAPH_CENTRALITY_MAP
+    )
+    
+    target_case = next((c for c in siu_queue if c.case_id == case_id), None)
+    if not target_case:
+        if siu_queue:
+            target_case = siu_queue[0]
+        else:
+            raise HTTPException(status_code=404, detail=f"Case ID {case_id} not found")
+
+    return build_copilot_context(
+        case_id=target_case.case_id,
+        provider_npi=target_case.provider_npi,
+        claims=CLAIM_DATABASE,
+        rule_map=RULE_RESULTS_MAP,
+        anomaly_map=ANOMALY_RESULTS_MAP,
+        graph_centrality=target_case.graph_centrality,
+        composite_risk_score=target_case.composite_risk_score
+    )

@@ -49,3 +49,19 @@ class SIUCase(BaseModel):
     composite_risk_score: float
     status: str = "OPEN"
     forecast: Optional[ExposureForecast] = None
+    # Append to app/models/schemas.py
+
+class CopilotContextPayload(BaseModel):
+    case_id: str
+    provider_npi: str
+    member_id: str
+    total_claim_amount: float
+    composite_risk_score: float
+    rule_flag_count: int
+    rule_flag_reasons: List[str]
+    ml_anomaly_score: float
+    graph_centrality_score: float
+    projected_30d_loss: float
+    projected_90d_loss: float
+    associated_claim_ids: List[str]
+    policy_context_paragraphs: List[str] = []
