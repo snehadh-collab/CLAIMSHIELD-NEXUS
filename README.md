@@ -73,7 +73,7 @@ Package Manager: npm or pnpm
 GET / — System health check and service diagnostics
 GET /api/v1/siu/queue — Ranked SIU case list sorted by composite risk
 POST /api/v1/analyze — Real-time claim scoring across Rules + ML layers
-GET /api/v1/cases/{npi}/forecast — 30/60/90-day cumulative financial loss projections
+GET /api/v1/cases/{npi}/forecast — 90-day cumulative financial loss projections.
 GET /api/v1/copilot/context/{case_id} — Sub-100ms aggregated case context payload
 GET /api/v1/graph/export/{case_id} — Subgraph export for node-edge graph visualization
 POST /api/v1/cases/{case_id}/action — Logs investigator actions (APPROVE, PAUSE_PAYMENT, FLAG_FOR_SIU)
