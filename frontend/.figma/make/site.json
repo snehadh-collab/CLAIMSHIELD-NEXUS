@@ -1,0 +1,10 @@
+{
+  "description": "Streamline healthcare fraud investigations with an AI-powered platform that enhances case management, risk assessment, and financial forecasting for investigators.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}
